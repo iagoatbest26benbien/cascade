@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cascade"
+  short_description: "Ticket dispatch, follow-ups, evidence and recovery"
+  icon_small: "./assets/icon.svg"
+  icon_large: "./assets/icon.svg"
+  brand_color: "#5044C7"
+  default_prompt: "Use $cascade to map these tickets, prepare ready assignments, and maintain a shared HTML tracker."

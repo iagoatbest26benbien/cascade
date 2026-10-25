@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible problem with the skill or helpers.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed and expected behavior
+      description: Include the command and exact error. Remove private data.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Use a fictional tracker or the bundled demo. Never include credentials or private checkpoints.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: OS, Python version, Git version, agent host if relevant
+    validations:
+      required: true

@@ -1,0 +1,9 @@
+# Cascade cover illustration
+
+Asset: [cascade-cover.png](cascade-cover.png). Generated on 2026-10-25 with the built-in `imagegen` tool, then copied into this repository. The tracker screenshot is a separate browser render of the fictional example.
+
+Final generation prompt:
+
+```text
+Use case: ads-marketing. Asset type: finished wide 2.4:1 GitHub README cover banner for an open-source developer toolkit named Cascade. Create an exceptionally polished editorial 3D illustration, refined and memorable, not a generic AI/neon tech background. Scene: a miniature architectural waterfall of luminous lavender and pale blue frosted-glass ticket tiles flowing through three stepped stone terraces, branching into two precise channels and rejoining a calm lower pool; tiny elegant rounded task cards integrated into the flow evoke coordinated work and dependable handoffs. Material: sculptural matte midnight-navy stone, translucent lilac glass, subtle silver highlights, soft studio lighting, delicate natural water. Broad harmonious composition with the sculptural waterfall in the right half and generous dark negative space on the left for typography. Palette midnight ink #111727, soft lavender #C5BBFF, restrained icy blue, a small sage accent. Set the exact brand text 'Cascade' prominently on the left in beautiful clean contemporary sans-serif, cream-white, with one smaller English tagline below: 'Clear work. Reliable handoffs.' Typography must be perfectly spelled, spacious, exceptionally legible. Below the tagline a discreet small caption: 'An open-source agent skill'. Composition belongs to a premium independently designed software project, calm, tactile, precise, artistic, useful at small README size. Wide landscape banner with comfortable safe margins. No other text, no logos from other companies, no watermark, no people, no robots, no code rain, no dense circuit lines. Produce the complete banner, with sophisticated restrained visual hierarchy.
+```

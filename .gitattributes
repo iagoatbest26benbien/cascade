@@ -1,0 +1,11 @@
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.svg text eol=lf
+*.png binary
+
+# Historical fixtures are content-addressed recovery inputs.
+scripts/tests/fixtures/*.py.txt -text

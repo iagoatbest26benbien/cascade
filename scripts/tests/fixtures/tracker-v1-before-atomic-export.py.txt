@@ -1,0 +1,226 @@
+#!/usr/bin/env python3
+"""Maintain one HTML tracker and export its current prompts, using only the standard library."""
+
+import argparse
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import fcntl
+import hashlib
+import json
+from pathlib import Path
+import re
+import tempfile
+
+
+DATA = re.compile(r'(<script type="application/json" id="tracker-data">)(.*?)(</script>)', re.S)
+STATES = {"to-prepare", "ready", "running", "to-verify", "follow-up", "blocked", "done"}
+RESULTS = {"unverified", "passed", "failed", "not-applicable"}
+BASE_REVISION = "_base_sha256"  # Editing metadata; never persisted in the HTML.
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def read_state(path):
+    html = path.read_text(encoding="utf-8")
+    matches = list(DATA.finditer(html))
+    require(len(matches) == 1, "Expected exactly one tracker-data block.")
+    return html, json.loads(matches[0][2])
+
+
+def revision(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@contextmanager
+def writer_lock(path):
+    # Keep the lock inode stable: unlinking it could admit two independent locks.
+    with path.with_name("." + path.name + ".lock").open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError("Another writer is saving this tracker; reread after it finishes.") from None
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def render(html, data):
+    require(len(DATA.findall(html)) == 1, "Expected exactly one tracker-data block.")
+    payload = json.dumps(data, ensure_ascii=False, indent=2).replace("<", "\\u003c")
+    return DATA.sub(lambda m: m[1] + "\n" + payload + "\n" + m[3], html)
+
+
+def prompt_path(root, filename):
+    relative = Path(filename)
+    require(not relative.is_absolute() and relative.parts and relative.parts[0] == "prompts",
+            "Prompt files must be relative paths under prompts/.")
+    result = (root / relative).resolve()
+    require(result.is_relative_to(root.resolve()) and result.is_relative_to((root / "prompts").resolve())
+            and result.suffix == ".md",
+            "Prompt path escapes the workstream or is not Markdown.")
+    return result
+
+
+def validate(data, root):
+    require(isinstance(data, dict), "State must be an object.")
+    for key in ("title", "spec", "scope", "updated_at", "next_action"):
+        require(isinstance(data.get(key), str), f"{key} must be a string.")
+    for key in ("decisions", "journal"):
+        require(isinstance(data.get(key), list) and all(isinstance(x, str) for x in data[key]),
+                f"{key} must be a list of strings.")
+    require(isinstance(data.get("missions"), list), "missions must be a list.")
+    missions, exports = {}, {}
+    for mission in data["missions"]:
+        require(isinstance(mission, dict), "Each mission must be an object.")
+        for key in ("id", "title", "ticket", "status"):
+            require(isinstance(mission.get(key), str) and mission[key], f"Missing mission {key}.")
+        mid = mission["id"]
+        require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", mid), f"Invalid mission ID: {mid}")
+        require(mid not in missions, f"Duplicate mission ID: {mid}")
+        require(mission["status"] in STATES, f"Unknown mission state: {mid}")
+        missions[mid] = mission
+        for key in ("owner", "chat", "workspace", "checked_at", "blocker", "next_action", "report"):
+            require(isinstance(mission.get(key, ""), str), f"{mid}.{key} must be a string.")
+        for key in ("depends_on", "remaining", "evidence"):
+            items = mission.get(key, [])
+            require(isinstance(items, list) and all(isinstance(x, str) for x in items),
+                    f"{mid}.{key} must be a list of strings.")
+        criteria = mission.get("criteria")
+        require(isinstance(criteria, list), f"Missing criteria list: {mid}")
+        for criterion in criteria:
+            require(isinstance(criterion, dict), f"Invalid criterion: {mid}")
+            require(isinstance(criterion.get("text"), str) and criterion["text"].strip(),
+                    f"Empty criterion: {mid}")
+            require(criterion.get("result") in RESULTS, f"Invalid criterion result: {mid}")
+            require(isinstance(criterion.get("proof", ""), str), f"Invalid proof: {mid}")
+            if criterion["result"] in {"passed", "not-applicable"}:
+                require(criterion.get("proof", "").strip(), f"Evidence or reason required: {mid}")
+        if mission["status"] == "done":
+            require(criteria and all(c["result"] in {"passed", "not-applicable"} for c in criteria)
+                    and not mission.get("remaining") and not mission.get("blocker"),
+                    f"Unfinished criteria, work, or blocker in done mission: {mid}")
+        if mission["status"] == "ready":
+            require(not mission.get("blocker"), f"Ready mission still has a blocker: {mid}")
+        prompt = mission.get("prompt")
+        if prompt is not None:
+            require(isinstance(prompt, dict), f"Invalid prompt: {mid}")
+            require(prompt.get("kind") in {"implementation", "follow-up"}, f"Invalid prompt kind: {mid}")
+            require(prompt.get("delivery") in {"prepared", "sent", "unknown"}, f"Invalid delivery: {mid}")
+            require(isinstance(prompt.get("text"), str) and prompt["text"].strip(), f"Empty prompt: {mid}")
+            require(isinstance(prompt.get("file"), str), f"Missing prompt file: {mid}")
+            path = prompt_path(root, prompt["file"])
+            require(path not in exports, f"Prompt file shared by multiple missions: {path}")
+            exports[path] = prompt["text"].rstrip() + "\n"
+    visiting, visited = set(), set()
+
+    def visit(mid):
+        require(mid not in visiting, f"Dependency cycle at {mid}")
+        if mid in visited:
+            return
+        visiting.add(mid)
+        for dependency in missions[mid].get("depends_on", []):
+            require(dependency in missions, f"Unknown dependency {dependency} for {mid}")
+            visit(dependency)
+            if missions[mid]["status"] == "ready":
+                require(missions[dependency]["status"] == "done", f"Unmet prerequisite {dependency} for {mid}")
+        visiting.remove(mid)
+        visited.add(mid)
+
+    for mid in missions:
+        visit(mid)
+    return exports
+
+
+def atomic_write(path, content):
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as temp:
+        temp.write(content)
+        temporary = Path(temp.name)
+    try:
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def save_state(path, data, expected=None):
+    data = dict(data)
+    from_read = data.pop(BASE_REVISION, None)
+    require(expected is None or from_read is None or expected == from_read,
+            "--expected differs from the editing JSON's base revision.")
+    expected = expected or from_read
+    require(isinstance(expected, str) and re.fullmatch(r"[a-f0-9]{64}", expected),
+            "save requires the base revision from read, or --expected SHA256. Reread the tracker first.")
+    with writer_lock(path):
+        require(revision(path) == expected,
+                "Stale tracker revision; reread and reconcile the current state before saving.")
+        html, _ = read_state(path)
+        exports = validate(data, path.parent)
+        for output, content in exports.items():
+            require(not output.exists() or output.read_text(encoding="utf-8") == content,
+                    f"Preserve existing prompt; choose a new follow-up filename: {output}")
+        for output, content in exports.items():
+            if not output.exists():
+                output.parent.mkdir(parents=True, exist_ok=True)
+                with output.open("x", encoding="utf-8") as stream:
+                    stream.write(content)
+        data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        atomic_write(path, render(html, data))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("command", choices=("init", "read", "save", "check"))
+    parser.add_argument("html", type=Path)
+    parser.add_argument("--title", default="Implementation tracker")
+    parser.add_argument("--spec", default="")
+    parser.add_argument("--data", type=Path, help="Temporary JSON input for save")
+    parser.add_argument("--expected", help="Base HTML SHA-256 for save; normally supplied by read in the editing JSON")
+    args = parser.parse_args()
+    path = args.html.resolve()
+    if args.command == "init":
+        require(not path.exists(), f"Tracker already exists: {path}")
+        template = Path(__file__).resolve().parents[1] / "assets/tracker.html"
+        data = {"title": args.title, "spec": args.spec, "scope": "", "updated_at": datetime.now(timezone.utc).isoformat(),
+                "next_action": "Read the specification and record its tickets and dependencies.",
+                "decisions": [], "missions": [], "journal": []}
+        path.parent.mkdir(parents=True, exist_ok=True)
+        for directory in ("prompts", "evidence"):
+            (path.parent / directory).mkdir(exist_ok=True)
+        with path.open("x", encoding="utf-8") as output:
+            output.write(render(template.read_text(encoding="utf-8"), data))
+    else:
+        if args.command == "save":
+            require(args.data is not None, "save requires --data.")
+            save_state(path, json.loads(args.data.read_text(encoding="utf-8")), args.expected)
+            print(f"save: OK — {path}")
+            return
+        # Hash and parse the same bytes, even if an atomic save replaces the file.
+        content = path.read_bytes()
+        html = content.decode("utf-8")
+        matches = list(DATA.finditer(html))
+        require(len(matches) == 1, "Expected exactly one tracker-data block.")
+        data = json.loads(matches[0][2])
+        exports = validate(data, path.parent)
+        if args.command == "read":
+            data[BASE_REVISION] = hashlib.sha256(content).hexdigest()
+            print(json.dumps(data, ensure_ascii=False, indent=2))
+            return
+        if args.command == "check":
+            for output, content in exports.items():
+                require(output.exists() and output.read_text(encoding="utf-8") == content,
+                        f"Missing or divergent prompt export: {output}")
+            refs = [data["spec"]] + [m.get("report", "") for m in data["missions"]]
+            for reference in refs:
+                if reference.startswith("/"):
+                    require(Path(reference).exists(), f"Missing local source: {reference}")
+    print(f"{args.command}: OK — {path}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (ValueError, OSError) as error:
+        raise SystemExit(str(error))

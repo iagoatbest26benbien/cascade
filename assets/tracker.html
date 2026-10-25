@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Implementation tracker</title>
+<style>
+:root { color-scheme: light dark; --paper: #f6f7fb; --card: #fff; --ink: #182236; --accent: #5044c7; --muted: #647087; --line: #dce1ed; --wash: #f0f1fa; --green: #19714b; --green-wash: #e9f7f0; --amber: #875618; --amber-wash: #fff5e5; --radius: 16px; }
+@media (prefers-color-scheme: dark) { :root { --paper: #10141f; --card: #191f2e; --ink: #edf0fa; --accent: #b8b0ff; --muted: #a2aec5; --line: #343d52; --wash: #23293e; --green: #96e4ba; --green-wash: #1c3a2d; --amber: #f3cd94; --amber-wash: #3d3020; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+main { max-width: 1120px; margin: auto; padding: 32px 28px 64px; }
+a { color: var(--accent); text-underline-offset: 4px; overflow-wrap: anywhere; }
+button, input, select { font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 9px; padding: 10px 13px; }
+button { cursor: pointer; font-weight: 600; }
+button:hover { background: var(--wash); border-color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.7rem); font-weight: 650; line-height: 1.08; letter-spacing: -.055em; margin: 16px 0; max-width: 850px; }
+h2 { font-size: 1.3rem; font-weight: 650; letter-spacing: -.025em; margin: 0; }
+h3 { font-size: .82rem; font-weight: 650; margin: 0 0 10px; }
+p { margin: 8px 0; }
+.eyebrow, .muted, footer { color: var(--muted); }
+.eyebrow { font: 600 .69rem/1.6 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .13em; }
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 22px; margin-bottom: 32px; border-bottom: 1px solid var(--line); }
+.brand-name { display: inline-flex; align-items: center; gap: 10px; font-size: .85rem; font-weight: 650; letter-spacing: -.02em; }
+.brand-mark { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: var(--paper); font: 700 17px ui-monospace, monospace; }
+.local { font: .69rem ui-monospace, monospace; color: var(--muted); }
+.local::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: var(--green); }
+#scope { max-width: 760px; font-size: 1rem; color: var(--muted); }
+#updated { font: .73rem/1.6 ui-monospace, monospace; margin-top: 14px; }
+.next { margin: 28px 0 20px; padding: 20px 24px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 0 12px 12px 0; background: var(--card); }
+.next h2 { color: var(--accent); font: 650 .68rem ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }
+.next p { margin: 0; font-weight: 500; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); margin: 20px 0 30px; overflow: hidden; }
+.stat { padding: 20px 24px; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat strong { font-size: 2rem; font-weight: 550; letter-spacing: -.05em; display: block; line-height: 1.2; margin-bottom: 7px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .76rem; color: var(--muted); }
+.stat:nth-child(2) strong { color: var(--accent); } .stat:nth-child(3) strong { color: var(--amber); } .stat:nth-child(4) strong { color: var(--green); }
+.toolbar { display: flex; gap: 12px; align-items: end; margin: 20px 0 10px; flex-wrap: wrap; }
+.toolbar label { display: grid; gap: 6px; font-size: .75rem; color: var(--muted); }
+.toolbar label:first-child { flex: 1; min-width: 200px; }
+#visible-count { color: var(--muted); font: .72rem ui-monospace, monospace; margin: 15px 0; }
+.mission { border: 1px solid var(--line); background: var(--card); border-radius: var(--radius); margin: 16px 0; padding: 26px; scroll-margin-top: 16px; box-shadow: 0 3px 12px #10173503; }
+.mission:target { outline: 2px solid var(--accent); }
+.card-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 12px; }
+.card-head .eyebrow { margin-bottom: 5px; }
+.badge { border: 1px solid var(--line); background: var(--wash); color: var(--muted); border-radius: 999px; padding: 4px 11px; font: 600 .68rem/1.6 ui-monospace, monospace; white-space: nowrap; }
+.ready .badge, .follow-up .badge, .running .badge { color: var(--accent); }
+.done .badge { color: var(--green); background: var(--green-wash); border-color: transparent; }
+.blocked .badge { color: var(--amber); background: var(--amber-wash); border-color: transparent; }
+.meta { color: var(--muted); font-size: .75rem; margin: 12px 0; overflow-wrap: anywhere; }
+.links { display: flex; gap: 16px; flex-wrap: wrap; font-size: .78rem; }
+.columns { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+ul { margin: 8px 0 18px; padding-left: 18px; }
+li { margin: 7px 0; overflow-wrap: anywhere; font-size: .85rem; }
+.proof { display: block; font-size: .77rem; color: var(--muted); margin-top: 4px; }
+.blocker { border-left: 3px solid var(--amber); padding: 10px 14px; background: var(--amber-wash); color: var(--amber); border-radius: 0 8px 8px 0; font-size: .85rem; }
+details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
+summary { cursor: pointer; font-size: .82rem; font-weight: 600; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; font: .78rem/1.75 ui-monospace, monospace; background: var(--wash); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.prompt-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.empty { padding: 32px; border: 1px dashed var(--line); border-radius: var(--radius); text-align: center; color: var(--muted); }
+.section { margin-top: 30px; }
+footer { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 20px; font-size: .73rem; }
+[hidden] { display: none !important; }
+@media (max-width: 680px) { main { padding: 22px 16px 40px; } .brand { margin-bottom: 24px; } .local { font-size: .61rem; } .stats { grid-template-columns: 1fr 1fr; } .stat { padding: 17px; } .stat:nth-child(3) { border-left: 0; } .stat:nth-child(n+3) { border-top: 1px solid var(--line); } .columns { grid-template-columns: 1fr; gap: 4px; } .card-head { flex-direction: column; gap: 12px; } .mission { padding: 20px; } .next { padding: 18px; } }
+@media print { button, .toolbar, .brand { display: none; } main { max-width: none; } .mission { break-inside: avoid; box-shadow: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><span class="brand-name"><span class="brand-mark" aria-hidden="true">↳</span> Cascade</span><span class="local">Local file · works offline</span></div>
+  <header><div class="eyebrow">Shared implementation tracker</div><h1 id="title">Implementation tracker</h1><p id="scope"></p><div class="links" id="sources"></div><p class="muted" id="updated"></p></header>
+  <section class="next" aria-labelledby="next-heading"><h2 id="next-heading">Next action</h2><p id="next-action"></p></section>
+  <section class="stats" id="stats" aria-label="Mission counts"></section>
+  <section class="section" id="decisions-section"><h2>Decisions needed</h2><ul id="decisions"></ul></section>
+  <section class="section" aria-labelledby="missions-heading">
+    <h2 id="missions-heading">Missions</h2>
+    <div class="toolbar"><label>Find a mission<input id="search" type="search" placeholder="Ticket, owner, title…"></label><label>State<select id="filter"><option value="all">All states</option></select></label></div>
+    <p id="visible-count" aria-live="polite"></p><div id="missions"></div>
+  </section>
+  <section class="section"><details><summary>Decision and handoff history</summary><ul id="journal"></ul></details></section>
+  <footer>Read this tracker before assigning work and after every result. Prepared ≠ sent ≠ running ≠ accepted. Saved file is authoritative; this page does not write changes.</footer>
+  <noscript><p>JavaScript is required for the visual view. The complete state remains in the tracker-data block in this HTML file.</p></noscript>
+</main>
+<script type="application/json" id="tracker-data">
+{"title":"Implementation tracker","spec":"","scope":"","updated_at":"","next_action":"Read the specification and record its tickets and dependencies.","decisions":[],"missions":[],"journal":[]}
+</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("tracker-data").textContent);
+const labels = {"to-prepare":"To prepare",ready:"Ready",running:"Running","to-verify":"To verify","follow-up":"Follow-up needed",blocked:"Blocked",done:"Accepted"};
+const results = {unverified:"Unverified",passed:"Passed",failed:"Failed","not-applicable":"Not applicable"};
+const deliveries = {prepared:"Prepared",sent:"Sent",unknown:"Transmission unknown"};
+const byId = Object.fromEntries(data.missions.map(m => [m.id, m]));
+const $ = id => document.getElementById(id);
+function element(tag, text, className) { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (className) e.className = className; return e; }
+function link(label, target) {
+  const e = element("a", label);
+  const value = String(target || "");
+  if (/^(https?:\/\/|codex:\/\/|t3-thread:\/\/|file:\/\/|#)/i.test(value)) e.href = value;
+  else if (value.startsWith("/") && !value.startsWith("//")) e.href = "file://" + value;
+  else if (value.startsWith("prompts/") && !value.includes("..")) e.href = value;
+  else return element("span", label + (value ? " · " + value : ""));
+  if (!value.startsWith("#")) { e.target = "_blank"; e.rel = "noopener noreferrer"; }
+  else e.addEventListener("click", () => { if (location.hash === value) revealHash(); });
+  return e;
+}
+function list(items, parent) { const ul = element("ul"); for (const item of items || []) ul.append(element("li", item)); parent.append(ul); }
+function section(title, items, parent) { if (items?.length) { parent.append(element("h3", title)); list(items, parent); } }
+async function copyPrompt(text, button) {
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+    else { const input = element("textarea"); input.value = text; document.body.append(input); input.select(); const copied = document.execCommand("copy"); input.remove(); if (!copied) throw new Error("Copy unavailable"); }
+    button.textContent = "Copied";
+  } catch { button.textContent = "Select and copy the prompt below"; }
+}
+document.title = data.title;
+$("title").textContent = data.title;
+$("scope").textContent = data.scope;
+$("updated").textContent = data.updated_at ? "Saved " + data.updated_at : "No state recorded yet";
+$("next-action").textContent = data.next_action;
+if (data.spec) $("sources").append(link("Specification", data.spec));
+const counts = [[data.missions.length,"Total missions"],[data.missions.filter(m => m.status === "ready").length,"Ready to start"],[data.missions.filter(m => m.status === "blocked").length,"Blocked"],[data.missions.filter(m => m.status === "done").length,"Accepted"]];
+for (const [count,label] of counts) { const stat = element("div",undefined,"stat"); stat.append(element("strong",count),element("span",label)); $("stats").append(stat); }
+for (const decision of data.decisions) $("decisions").append(element("li",decision));
+$("decisions-section").hidden = !data.decisions.length;
+for (const entry of data.journal) $("journal").append(element("li",entry));
+for (const [value,label] of Object.entries(labels)) { const option = element("option",label); option.value = value; $("filter").append(option); }
+function card(m) {
+  const article = element("article",undefined,"mission " + m.status); article.id = m.id;
+  const head = element("div",undefined,"card-head"), heading = element("div");
+  heading.append(element("div",m.id,"eyebrow"),element("h2",m.title));
+  head.append(heading,element("span",labels[m.status],"badge")); article.append(head);
+  const links = element("div",undefined,"links"); links.append(link("Ticket",m.ticket),link("Permanent link","#" + m.id));
+  if (m.chat) links.append(link("Existing chat",m.chat));
+  if (m.report) links.append(link("Latest report",m.report));
+  article.append(links,element("p",[m.owner || "Unassigned", m.workspace, m.checked_at && "Checked " + m.checked_at].filter(Boolean).join(" · "),"meta"));
+  if (m.depends_on?.length) { const deps = element("p",undefined,"meta"); deps.append("Depends on: "); m.depends_on.forEach((id,i) => { if (i) deps.append(" · "); deps.append(link(id + " — " + (labels[byId[id]?.status] || "Unknown"),"#" + id)); }); article.append(deps); }
+  const columns = element("div",undefined,"columns"), criteria = element("div"), remainder = element("div");
+  criteria.append(element("h3","Acceptance criteria"));
+  const ul = element("ul");
+  for (const c of m.criteria) { const li = element("li"); li.append(element("strong",results[c.result] + " · "),document.createTextNode(c.text)); if (c.proof) li.append(element("span",c.proof,"proof")); ul.append(li); }
+  criteria.append(ul); if (!m.criteria.length) criteria.append(element("p","Criteria not recorded yet.","muted"));
+  section("Evidence by delivery stage",m.evidence,criteria);
+  section("Still needed",m.remaining,remainder);
+  if (m.blocker) remainder.append(element("p",m.blocker,"blocker"));
+  remainder.append(element("h3","Next action"),element("p",m.next_action || "No next action recorded."));
+  columns.append(criteria,remainder); article.append(columns);
+  if (m.prompt) {
+    const detail = element("details"), tools = element("div",undefined,"prompt-tools"), button = element("button","Copy prompt"); button.type = "button";
+    detail.append(element("summary",(m.prompt.kind === "follow-up" ? "Follow-up prompt" : "Implementation prompt") + " · " + deliveries[m.prompt.delivery]));
+    button.addEventListener("click",() => copyPrompt(m.prompt.text,button));
+    tools.append(button,link("Open prompt file",m.prompt.file));
+    detail.append(element("pre",m.prompt.text),tools); article.append(detail);
+  }
+  return article;
+}
+function show() {
+  const query = $("search").value.toLocaleLowerCase(), state = $("filter").value;
+  const missions = data.missions.filter(m => (state === "all" || m.status === state) && [m.id,m.title,m.ticket,m.owner,m.workspace].join(" ").toLocaleLowerCase().includes(query));
+  $("missions").replaceChildren(...missions.map(card));
+  $("visible-count").textContent = `${missions.length} of ${data.missions.length} missions shown`;
+  if (!missions.length) $("missions").append(element("p",data.missions.length ? "No missions match these filters." : "No missions recorded. Read the specification and prepare the first implementation prompt.","empty"));
+}
+function revealHash() { const id = decodeURIComponent(location.hash.slice(1)); if (byId[id]) { $("search").value = ""; $("filter").value = "all"; show(); $(id)?.scrollIntoView(); } }
+$("search").addEventListener("input",show); $("filter").addEventListener("change",show);
+window.addEventListener("hashchange",revealHash); show(); revealHash();
+</script>
+</body>
+</html>
