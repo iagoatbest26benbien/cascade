@@ -7,7 +7,7 @@
 With Node.js 22.20+ and the [skills CLI](https://github.com/vercel-labs/skills), install directly from GitHub:
 
 ```bash
-npx skills add iagoatbest26benbien/cascade --skill cascade
+npx skills add nautalsoft/cascade --skill cascade
 ```
 
 Choose your agent interactively. Add `-g` for a personal installation across projects, or `--agent codex` to select Codex. The CLI's default installation telemetry powers discovery on [skills.sh](https://skills.sh/docs/faq); opt out with `DISABLE_TELEMETRY=1` if desired.
@@ -17,7 +17,7 @@ For a Python-only installation with explicit destination and overwrite refusal, 
 Clone the repository, inspect `SKILL.md`, then choose a destination for the complete skill directory:
 
 ```bash
-git clone https://github.com/iagoatbest26benbien/cascade.git
+git clone https://github.com/nautalsoft/cascade.git
 cd cascade
 python3 tools/install.py --dest "$HOME/.agents/skills/cascade"
 ```

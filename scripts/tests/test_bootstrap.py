@@ -141,6 +141,7 @@ class BootstrapTests(unittest.TestCase):
         docs.parent.mkdir()
         docs.write_text("Recovery documentation")
         with mock.patch.object(bootstrap, "SCRIPT", tools / "bootstrap.py"), \
+                mock.patch.object(bootstrap.Path, "home", return_value=Path(self.temp.name) / "empty-home"), \
                 mock.patch.dict(os.environ, {"CODEX_HOME": str(Path(self.temp.name) / "empty-codex")}):
             self.assertIn(str(docs).encode(), bootstrap.instruction())
             docs.unlink()

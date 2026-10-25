@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iagoatbest26benbien/cascade/actions/workflows/ci.yml"><img src="https://github.com/iagoatbest26benbien/cascade/actions/workflows/ci.yml/badge.svg" alt="Validation"></a>
+  <a href="https://github.com/nautalsoft/cascade/actions/workflows/ci.yml"><img src="https://github.com/nautalsoft/cascade/actions/workflows/ci.yml/badge.svg" alt="Validation"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6759df" alt="MIT license"></a>
-  <a href="https://skills.sh/iagoatbest26benbien/cascade"><img src="https://skills.sh/b/iagoatbest26benbien/cascade" alt="Install Cascade on skills.sh"></a>
+  <a href="https://skills.sh/nautalsoft/cascade"><img src="https://skills.sh/b/nautalsoft/cascade" alt="Install Cascade on skills.sh"></a>
   <img src="https://img.shields.io/badge/python-3.11%2B-3776ab" alt="Python 3.11 or newer">
   <img src="https://img.shields.io/badge/runtime_dependencies-zero-237b57" alt="Zero third-party Python dependencies">
 </p>
@@ -50,13 +50,13 @@ You need **Python 3.11+** on **Linux, macOS or WSL**. The helpers use only Pytho
 Install with the [skills CLI](https://skills.sh/docs/cli) and choose your agent (Node.js 22.20+ is required for this installer):
 
 ```bash
-npx skills add iagoatbest26benbien/cascade --skill cascade
+npx skills add nautalsoft/cascade --skill cascade
 ```
 
 Add `-g` to install across projects. Or use the dependency-free Python installer:
 
 ```bash
-git clone https://github.com/iagoatbest26benbien/cascade.git
+git clone https://github.com/nautalsoft/cascade.git
 cd cascade
 
 # Install for Codex and other hosts that discover ~/.agents/skills.
@@ -129,4 +129,4 @@ python3 -B tools/check.py
 
 This runs the helper and packaging tests plus repository checks. GitHub Actions runs the same entry point on Linux and macOS. See [CONTRIBUTING.md](CONTRIBUTING.md) for the scope of changes and visual checks.
 
-MIT licensed. Built for people and agents who want the next handoff to be as clear as the first. Adaptation credits are in [NOTICE.md](NOTICE.md).
+Created by [Nautal Soft](https://github.com/nautalsoft). MIT licensed. Built for people and agents who want the next handoff to be as clear as the first. Adaptation credits are in [NOTICE.md](NOTICE.md).
