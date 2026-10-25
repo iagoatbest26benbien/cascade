@@ -6,6 +6,7 @@
 *.yaml text eol=lf
 *.svg text eol=lf
 *.png binary
+*.jpg binary
 
 # Historical fixtures are content-addressed recovery inputs.
 scripts/tests/fixtures/*.py.txt -text

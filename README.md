@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="docs/assets/cascade-cover.png" alt="Cascade — Clear work. Shared memory. Reliable handoffs." width="100%">
+  <img src="docs/assets/cascade-cover.jpg" alt="Black-and-white photograph of a waterfall between dark cliffs" width="735">
 </p>
+
+<h1 align="center">Cascade</h1>
 
 <p align="center">
   <a href="https://github.com/nautalsoft/cascade/actions/workflows/ci.yml"><img src="https://github.com/nautalsoft/cascade/actions/workflows/ci.yml/badge.svg" alt="Validation"></a>

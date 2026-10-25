@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/cascade-cover.png" alt="Cascade — des missions claires, une mémoire partagée, des relais fiables" width="100%"></p>
+<p align="center"><img src="assets/cascade-cover.jpg" alt="Photographie en noir et blanc d’une cascade entre des falaises sombres" width="735"></p>
 
 # Cascade
 
