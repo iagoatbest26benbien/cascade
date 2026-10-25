@@ -19,6 +19,14 @@ Un skill pour coordonner des tickets avec des agents : comprendre les dépendanc
 
 Prérequis : **Python 3.11+ sur Linux, macOS ou WSL**. Aucune dépendance Python externe. Le lecteur HTML fonctionne aussi dans un navigateur Windows ; les scripts nécessitent un environnement POSIX.
 
+Avec Node.js 22.20+, tu peux l’installer directement depuis le catalogue [skills.sh](https://skills.sh/iagoatbest26benbien/cascade/cascade) :
+
+```bash
+npx skills add iagoatbest26benbien/cascade --skill cascade
+```
+
+Choisis ton agent ; ajoute `-g` pour l’utiliser dans tous tes projets. Pour une installation sans Node.js, utilise le script Python :
+
 ```bash
 git clone https://github.com/iagoatbest26benbien/cascade.git
 cd cascade

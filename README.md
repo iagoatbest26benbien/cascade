@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/iagoatbest26benbien/cascade/actions/workflows/ci.yml"><img src="https://github.com/iagoatbest26benbien/cascade/actions/workflows/ci.yml/badge.svg" alt="Validation"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-6759df" alt="MIT license"></a>
+  <a href="https://skills.sh/iagoatbest26benbien/cascade"><img src="https://skills.sh/b/iagoatbest26benbien/cascade" alt="Install Cascade on skills.sh"></a>
   <img src="https://img.shields.io/badge/python-3.11%2B-3776ab" alt="Python 3.11 or newer">
   <img src="https://img.shields.io/badge/runtime_dependencies-zero-237b57" alt="Zero third-party Python dependencies">
 </p>
@@ -45,6 +46,14 @@ When several tickets, agents and repositories move at once, the hardest question
 ## Start in two minutes
 
 You need **Python 3.11+** on **Linux, macOS or WSL**. The helpers use only Python's standard library. The HTML viewer works offline in a modern browser, including on Windows. Git is required for checkpoints and claims; authenticated GitHub CLI is required only for live GitHub source adapters.
+
+Install with the [skills CLI](https://skills.sh/docs/cli) and choose your agent (Node.js 22.20+ is required for this installer):
+
+```bash
+npx skills add iagoatbest26benbien/cascade --skill cascade
+```
+
+Add `-g` to install across projects. Or use the dependency-free Python installer:
 
 ```bash
 git clone https://github.com/iagoatbest26benbien/cascade.git
